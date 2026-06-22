@@ -15,7 +15,10 @@ import joblib
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "src"))
 
-from train import build_models
+import train
+from train import build_models, tune_random_forest
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import RandomizedSearchCV
 
 
 # ── Fixtures ──────────────────────────────────────────────────────────────────
@@ -143,3 +146,46 @@ class TestModelPersistence:
             assert np.array_equal(original_preds, loaded_preds), (
                 f"Loaded '{name}' predictions differ from original"
             )
+
+
+# ── Tests: tune_random_forest() ───────────────────────────────────────────────
+
+class TestTuneRandomForest:
+    """
+    Tests for tune_random_forest(). We monkeypatch RandomizedSearchCV in the
+    train module so the search runs 2 iterations instead of 20 — keeps tests fast.
+    """
+
+    @pytest.fixture()
+    def fast_search_patch(self, monkeypatch):
+        """Replace RandomizedSearchCV with a 2-iteration, 2-fold version."""
+        original = train.RandomizedSearchCV
+
+        def fast_search(estimator, param_distributions, **kwargs):
+            kwargs["n_iter"] = 2
+            kwargs["cv"]     = 2
+            kwargs["verbose"] = 0
+            return original(estimator, param_distributions, **kwargs)
+
+        monkeypatch.setattr(train, "RandomizedSearchCV", fast_search)
+
+    def test_returns_fitted_model(self, tiny_dataset, fast_search_patch):
+        """tune_random_forest must return a fitted RandomForestClassifier."""
+        X, y = tiny_dataset
+        X_df = np.array(X)
+        result = tune_random_forest(X_df, y)
+        assert hasattr(result, "predict"), "Returned object has no .predict()"
+
+    def test_returned_model_can_predict(self, tiny_dataset, fast_search_patch):
+        """The tuned model must produce valid predictions."""
+        X, y = tiny_dataset
+        result = tune_random_forest(np.array(X), y)
+        preds = result.predict(np.array(X))
+        assert preds.shape == (len(X),)
+        assert set(preds).issubset({0, 1})
+
+    def test_returned_model_is_random_forest(self, tiny_dataset, fast_search_patch):
+        """tune_random_forest must return a RandomForestClassifier instance."""
+        X, y = tiny_dataset
+        result = tune_random_forest(np.array(X), y)
+        assert isinstance(result, RandomForestClassifier)
