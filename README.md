@@ -118,7 +118,11 @@ fraud-detection/
 │   └── model_comparison.csv    ← metrics table
 ├── tests/
 │   ├── test_preprocessing.py   ← 13 unit tests for preprocessing
-│   └── test_models.py          ← 12 unit tests for model training
+│   ├── test_models.py          ← 15 unit tests for model training & tuning
+│   ├── test_evaluate.py        ← 10 unit tests for evaluation logic
+│   ├── test_eda.py             ← 7 unit tests for EDA
+│   ├── test_visualize.py       ← 8 unit tests for visualisation
+│   └── test_feature_importance.py ← 6 unit tests for feature importance
 ├── notebooks/                  ← reserved for Jupyter EDA notebooks
 ├── requirements.txt
 └── README.md

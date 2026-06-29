@@ -1,5 +1,7 @@
-"data/raw/creditcard.csv" 
-"models/" 
-"__pycache__/" 
-"*.pyc" 
-"data/raw/creditcard.csv" 
+data/raw/creditcard.csv
+models/
+__pycache__/
+*.pyc
+.coverage
+.pytest_cache/
+*.joblib
